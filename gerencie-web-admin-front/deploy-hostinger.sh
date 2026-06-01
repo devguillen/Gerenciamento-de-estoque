@@ -7,8 +7,8 @@ echo "🚀 Iniciando deploy para Hostinger..."
 
 # Configurações
 SERVER="deploy@72.61.35.107"
-REMOTE_PATH="/home/deploy/apps/stocksync-web-admin-front"
-APP_NAME="stocksync-web-admin-front"
+REMOTE_PATH="/home/deploy/apps/gerencie-web-admin-front"
+APP_NAME="gerencie-web-admin-front"
 
 # Cores para output
 GREEN='\033[0;32m'
@@ -35,7 +35,7 @@ echo "Destino: $REMOTE_PATH"
 echo ""
 
 # Nome do arquivo temporário
-DEPLOY_FILE="stocksync-web-admin-front-deploy-$(date +%Y%m%d-%H%M%S).tar.gz"
+DEPLOY_FILE="gerencie-web-admin-front-deploy-$(date +%Y%m%d-%H%M%S).tar.gz"
 
 echo "📦 Criando arquivo tar.gz..."
 tar -czf ${DEPLOY_FILE} \

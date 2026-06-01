@@ -30,7 +30,7 @@ API disponível em **http://localhost:3001**
 ### 2. Frontend
 
 ```bash
-cd stocksync-web-admin-front
+cd gerencie-web-admin-front
 npm install
 npm run dev
 ```
@@ -69,7 +69,7 @@ PORT=3001
 CORS_ORIGIN="http://localhost:3000"
 ```
 
-### Frontend (`stocksync-web-admin-front/.env.local`)
+### Frontend (`gerencie-web-admin-front/.env.local`)
 
 ```
 AUTH_API_URL=http://localhost:3001
