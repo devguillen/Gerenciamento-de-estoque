@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                Int               @id @default(autoincrement())
+  name              String
+  createdAt         DateTime          @default(now())
+  users             User[]
+  accountCategories AccountCategory[]
+  accountProducts   AccountProduct[]
+  purchases         Purchase[]
+  stockMovements    StockMovement[]
+
+  @@index([name])
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
+  password  String
+  name      String
+  role      String     @default("admin")
+  accountId Int
+  account   Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  purchases Purchase[]
+
+  @@index([accountId])
+}
+
+model Category {
+  id                Int               @id @default(autoincrement())
+  name              String
+  ownerAccountId    Int               @default(0)
+  prioritySort      Int               @default(0)
+  deleted           Boolean           @default(false)
+  createdAt         DateTime          @default(now())
+  accountCategories AccountCategory[]
+  productCategories ProductCategory[]
+
+  @@index([ownerAccountId, deleted])
+  @@index([name])
+}
+
+model AccountCategory {
+  id         Int      @id @default(autoincrement())
+  accountId  Int
+  categoryId Int
+  priority   Int      @default(0)
+  createdAt  DateTime @default(now())
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, categoryId])
+}
+
+model Brand {
+  id             Int       @id @default(autoincrement())
+  name           String
+  ownerAccountId Int       @default(0)
+  createdAt      DateTime  @default(now())
+  products       Product[]
+
+  @@unique([ownerAccountId, name])
+  @@index([ownerAccountId])
+}
+
+model Product {
+  id                Int               @id @default(autoincrement())
+  name              String
+  brandId           Int
+  unitType          String            @default("UN")
+  ownerAccountId    Int               @default(0)
+  minLimit          Int               @default(0)
+  maxLimit          Int               @default(0)
+  currentStock      Int               @default(0)
+  deleted           Boolean           @default(false)
+  createdAt         DateTime          @default(now())
+  brand             Brand             @relation(fields: [brandId], references: [id])
+  productCategories ProductCategory[]
+  accountProducts   AccountProduct[]
+  purchaseItems     PurchaseItem[]
+  stockMovements    StockMovement[]
+
+  @@index([ownerAccountId, deleted])
+  @@index([name])
+  @@index([brandId])
+}
+
+model ProductCategory {
+  id         Int      @id @default(autoincrement())
+  productId  Int
+  categoryId Int
+  createdAt  DateTime @default(now())
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, categoryId])
+}
+
+model AccountProduct {
+  id             Int             @id @default(autoincrement())
+  accountId      Int
+  productId      Int
+  customName     String          @default("")
+  minLimit       Int             @default(0)
+  maxLimit       Int             @default(0)
+  isFavorite     Boolean         @default(false)
+  isArchived     Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  account        Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  purchaseItems  PurchaseItem[]
+  stockMovements StockMovement[]
+
+  @@unique([accountId, productId])
+}
+
+enum StockMovementType {
+  PURCHASE
+  CONSUMPTION
+  ADJUSTMENT
+}
+
+model Purchase {
+  id              Int             @id @default(autoincrement())
+  accountId       Int
+  supplierId      Int?
+  createdByUserId Int
+  occurredAt      DateTime
+  notes           String?
+  totalAmount     Float
+  currency        String
+  createdAt       DateTime        @default(now())
+  account         Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  supplier        Supplier?       @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  createdBy       User            @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+  purchaseItems   PurchaseItem[]
+  stockMovements  StockMovement[]
+
+  @@index([accountId])
+  @@index([supplierId])
+  @@index([createdByUserId])
+}
+
+model PurchaseItem {
+  id               Int            @id @default(autoincrement())
+  purchaseId       Int
+  productId        Int
+  accountProductId Int
+  quantity         Int
+  itemTotalPrice   Float
+  createdAt        DateTime       @default(now())
+  purchase         Purchase       @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  product          Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  accountProduct   AccountProduct @relation(fields: [accountProductId], references: [id], onDelete: Cascade)
+
+  @@index([purchaseId])
+  @@index([productId])
+  @@index([accountProductId])
+}
+
+model StockMovement {
+  id               Int               @id @default(autoincrement())
+  accountId        Int
+  productId        Int
+  accountProductId Int
+  purchaseId       Int?
+  type             StockMovementType
+  note             String?
+  delta            Int
+  balanceAfter     Int
+  occurredAt       DateTime
+  createdAt        DateTime          @default(now())
+  account          Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  product          Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  accountProduct   AccountProduct    @relation(fields: [accountProductId], references: [id], onDelete: Cascade)
+  purchase         Purchase?         @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([productId])
+  @@index([accountProductId])
+  @@index([purchaseId])
+}
+
+model Supplier {
+  id             Int        @id @default(autoincrement())
+  name           String
+  address        String?
+  deleted        Boolean    @default(false)
+  ownerAccountId Int        @default(0)
+  createdAt      DateTime   @default(now())
+  purchases      Purchase[]
+
+  @@index([ownerAccountId, deleted])
+  @@index([name])
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, used])
+}

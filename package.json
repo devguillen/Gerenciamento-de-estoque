@@ -1,0 +1,10 @@
+{
+  "name": "projeto-estoque",
+  "private": true,
+  "scripts": {
+    "dev:api": "npm run dev --prefix stocksync-api",
+    "dev:web": "npm run dev --prefix stocksync-web-admin-front",
+    "setup": "npm install --prefix stocksync-api && npm install --prefix stocksync-web-admin-front && npm run db:setup --prefix stocksync-api",
+    "db:setup": "npm run db:setup --prefix stocksync-api"
+  }
+}
