@@ -60,7 +60,7 @@ App disponível em **http://localhost:3000**
 
 ## Variáveis de ambiente
 
-### Backend (`stocksync-api/.env`)
+### Backend (`gerencie-api/.env`)
 
 ```
 DATABASE_URL="file:./dev.db"
