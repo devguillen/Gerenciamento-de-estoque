@@ -5,8 +5,8 @@ Sistema completo de gerenciamento de estoque com frontend Next.js e backend Node
 ## Estrutura
 
 ```
-├── stocksync-api/              # Backend Node.js + Express + Prisma
-└── stocksync-web-admin-front/  # Frontend Next.js 15
+├── gerencie-api/              # Backend Node.js + Express + Prisma
+└── gerencie-web-admin-front/  # Frontend Next.js 15
 ```
 
 ## Pré-requisitos
@@ -19,7 +19,7 @@ Sistema completo de gerenciamento de estoque com frontend Next.js e backend Node
 ### 1. Backend
 
 ```bash
-cd stocksync-api
+cd gerencie-api
 npm install
 npm run db:setup
 npm run dev
