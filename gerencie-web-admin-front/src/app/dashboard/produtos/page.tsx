@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { inventoryService } from "@/services/inventoryService";
 import { productService } from "@/services/productService";
 import { Scope, SortDirection } from "@/types/common";
 import { ProductSortField } from "@/types/req/GetProductsRequest";
@@ -128,18 +129,26 @@ export default function ProdutosPage() {
     };
 
     const handleSaveProduct = async (data: ProductMutationRequest) => {
+        const { initial_stock, ...productData } = data;
         try {
             if (selectedProduct) {
                 // Update / Configure
-                await productService.updateProduct(selectedProduct.id, data);
+                await productService.updateProduct(selectedProduct.id, productData);
                 toast({ title: "Sucesso", description: "Produto atualizado com sucesso.", variant: "success" });
             } else {
                 // Create
-                if (!data.name || data.brand_id === 0) {
+                if (!productData.name || productData.brand_id === 0) {
                     toast({ title: "Mensagem de Alerta", description: "Nome e Marca são obrigatórios.", variant: "destructive" });
                     return;
                 }
-                await productService.createProduct(data);
+                const created = await productService.createProduct(productData);
+                if (initial_stock && initial_stock > 0 && created.account_product) {
+                    await inventoryService.adjustStock({
+                        account_product_id: created.account_product.id,
+                        quantity: initial_stock,
+                        motive: 'Estoque inicial',
+                    });
+                }
                 toast({ title: "Sucesso", description: "Produto criado com sucesso.", variant: "success" });
             }
             setIsFormOpen(false);

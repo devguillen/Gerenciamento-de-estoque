@@ -7,6 +7,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  accountId   Int
+  action      String
+  entity      String
+  entityId    Int?
+  oldValues   String?
+  newValues   String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([entity])
+  @@index([createdAt])
+}
+
 model Account {
   id                Int               @id @default(autoincrement())
   name              String
@@ -16,6 +37,7 @@ model Account {
   accountProducts   AccountProduct[]
   purchases         Purchase[]
   stockMovements    StockMovement[]
+  auditLogs         AuditLog[]
 
   @@index([name])
 }
@@ -30,6 +52,7 @@ model User {
   account   Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
   createdAt DateTime   @default(now())
   purchases Purchase[]
+  auditLogs AuditLog[]
 
   @@index([accountId])
 }

@@ -12,23 +12,24 @@ export interface PaginatedBrandResponse {
 }
 
 export const brandService = {
-    getBrands: async (search?: string, page: number = 1): Promise<PaginatedBrandResponse> => {
+    getBrands: async (search?: string, page: number = 1, perPage: number = 20): Promise<PaginatedBrandResponse> => {
         const response = await api.app.get<PaginatedBrandResponse>('/brand', {
-            params: {
-                search,
-                page,
-                per_page: 20 // Default reasonable limit for dropdowns
-            }
+            params: { search, page, per_page: perPage }
         });
         return response.data;
     },
 
     createBrand: async (name: string): Promise<Brand> => {
-        // API documentation says POST /brand returns... actually it likely returns the created brand object or at least ID.
-        // Assuming it returns the created Brand object based on typical patterns, but checking doc:
-        // "Insere uma nova marca para a conta... Example Value Schema { name: string }" -> Response schema usually mirrors resource.
-        // Let's assume it returns the Brand.
         const response = await api.app.post<Brand>('/brand', { name });
         return response.data;
-    }
+    },
+
+    updateBrand: async (id: number, name: string): Promise<Brand> => {
+        const response = await api.app.patch<Brand>(`/brand/${id}`, { name });
+        return response.data;
+    },
+
+    deleteBrand: async (id: number): Promise<void> => {
+        await api.app.delete(`/brand/${id}`);
+    },
 };

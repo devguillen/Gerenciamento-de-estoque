@@ -7,6 +7,7 @@ import brandRoutes from './routes/brands';
 import supplierRoutes from './routes/suppliers';
 import inventoryRoutes from './routes/inventory';
 import dashboardRoutes from './routes/dashboard';
+import auditLogRoutes from './routes/audit-logs';
 
 export function createApp() {
   const app = express();
@@ -30,6 +31,7 @@ export function createApp() {
   app.use(supplierRoutes);
   app.use(inventoryRoutes);
   app.use(dashboardRoutes);
+  app.use('/audit-logs', auditLogRoutes);
 
   return app;
 }

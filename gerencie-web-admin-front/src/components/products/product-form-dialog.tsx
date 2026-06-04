@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Dialog,
     DialogContent,
@@ -38,6 +39,8 @@ export function ProductFormDialog({
         min_limit: 0,
         max_limit: 0
     });
+    const [addToStock, setAddToStock] = useState(false);
+    const [initialStock, setInitialStock] = useState(1);
 
     useEffect(() => {
         if (open && product) {
@@ -61,13 +64,18 @@ export function ProductFormDialog({
                 min_limit: 0,
                 max_limit: 0
             });
+            setAddToStock(false);
+            setInitialStock(1);
         }
     }, [open, product]);
 
     const isSystemProduct = product ? product.owner_account_id === 0 : false;
 
     const handleSave = () => {
-        onSave(formData);
+        onSave({
+            ...formData,
+            initial_stock: addToStock ? initialStock : undefined,
+        });
     };
 
     return (
@@ -126,7 +134,7 @@ export function ProductFormDialog({
                          <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
                                 <label className="text-sm font-medium">Mínimo</label>
-                                <Input 
+                                <Input
                                     type="number"
                                     min={1}
                                     value={formData.min_limit}
@@ -135,7 +143,7 @@ export function ProductFormDialog({
                             </div>
                              <div className="space-y-1">
                                 <label className="text-sm font-medium">Máximo</label>
-                                <Input 
+                                <Input
                                     type="number"
                                     min={1}
                                     value={formData.max_limit}
@@ -144,6 +152,32 @@ export function ProductFormDialog({
                             </div>
                         </div>
                     </div>
+
+                    {!product && (
+                        <div className="border-t pt-4 mt-4 space-y-3">
+                            <div className="flex items-center gap-2">
+                                <Checkbox
+                                    id="add-to-stock"
+                                    checked={addToStock}
+                                    onCheckedChange={v => setAddToStock(!!v)}
+                                />
+                                <label htmlFor="add-to-stock" className="text-sm font-medium cursor-pointer">
+                                    Adicionar ao estoque agora
+                                </label>
+                            </div>
+                            {addToStock && (
+                                <div className="space-y-1">
+                                    <label className="text-sm font-medium">Quantidade inicial</label>
+                                    <Input
+                                        type="number"
+                                        min={1}
+                                        value={initialStock}
+                                        onChange={e => setInitialStock(Math.max(1, Number(e.target.value)))}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                 </div>
 

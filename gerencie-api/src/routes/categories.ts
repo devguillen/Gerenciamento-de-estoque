@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma, paginate, parseIntParam, parseScope, parseSortDir, toTimestamp } from '../lib/prisma';
 import { ownerScopeWhere, canModifyResource } from '../lib/scope';
 import { authMiddleware, AuthRequest, getAccountId } from '../middleware/auth';
+import { createAuditLog } from '../lib/auditLog';
 
 const router = Router();
 router.use(authMiddleware);
@@ -103,6 +104,7 @@ router.post('/category', async (req: AuthRequest, res: Response) => {
   if (!parsed.success) return res.status(400).json({ message: 'Invalid category data.' });
 
   const accountId = getAccountId(req);
+  const userId = req.user?.userId || 0;
   const { name, priority } = parsed.data;
 
   const category = await prisma.category.create({
@@ -117,6 +119,18 @@ router.post('/category', async (req: AuthRequest, res: Response) => {
     include: { accountCategories: { where: { accountId } } },
   });
 
+  // Registrar log de criação de categoria
+  await createAuditLog({
+    userId,
+    accountId,
+    action: 'CREATE',
+    entity: 'Category',
+    entityId: category.id,
+    newValues: { name, priority },
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+
   return res.status(201).json(mapCategory(category));
 });
 
@@ -126,6 +140,7 @@ router.patch('/category/:id', async (req: AuthRequest, res: Response) => {
   if (!parsed.success) return res.status(400).json({ message: 'Invalid category data.' });
 
   const accountId = getAccountId(req);
+  const userId = req.user?.userId || 0;
   const existing = await prisma.category.findFirst({ where: { id, deleted: false } });
   if (!existing) return res.status(404).json({ message: 'Category not found.' });
   if (!canModifyResource(existing.ownerAccountId, accountId)) {
@@ -133,6 +148,11 @@ router.patch('/category/:id', async (req: AuthRequest, res: Response) => {
   }
 
   const { name, priority } = parsed.data;
+
+  const oldValues = {
+    name: existing.name,
+    prioritySort: existing.prioritySort,
+  };
 
   await prisma.category.update({
     where: { id },
@@ -143,6 +163,19 @@ router.patch('/category/:id', async (req: AuthRequest, res: Response) => {
     where: { accountId_categoryId: { accountId, categoryId: id } },
     create: { accountId, categoryId: id, priority },
     update: { priority },
+  });
+
+  // Registrar log de atualização de categoria
+  await createAuditLog({
+    userId,
+    accountId,
+    action: 'UPDATE',
+    entity: 'Category',
+    entityId: id,
+    oldValues,
+    newValues: { name, priority },
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
   });
 
   const refreshed = await prisma.category.findUniqueOrThrow({
@@ -156,13 +189,32 @@ router.patch('/category/:id', async (req: AuthRequest, res: Response) => {
 router.delete('/category/:id', async (req: AuthRequest, res: Response) => {
   const id = Number(req.params.id);
   const accountId = getAccountId(req);
+  const userId = req.user?.userId || 0;
   const existing = await prisma.category.findFirst({ where: { id, deleted: false } });
   if (!existing) return res.status(404).json({ message: 'Category not found.' });
   if (!canModifyResource(existing.ownerAccountId, accountId)) {
     return res.status(403).json({ message: 'Forbidden.' });
   }
 
+  const oldValues = {
+    name: existing.name,
+    prioritySort: existing.prioritySort,
+  };
+
   await prisma.category.update({ where: { id }, data: { deleted: true } });
+
+  // Registrar log de exclusão de categoria
+  await createAuditLog({
+    userId,
+    accountId,
+    action: 'DELETE',
+    entity: 'Category',
+    entityId: id,
+    oldValues,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+
   return res.status(204).send();
 });
 

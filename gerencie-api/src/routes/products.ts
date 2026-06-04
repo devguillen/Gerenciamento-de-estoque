@@ -11,6 +11,7 @@ import {
 } from '../lib/prisma';
 import { ownerScopeWhere, canModifyResource } from '../lib/scope';
 import { authMiddleware, AuthRequest, getAccountId } from '../middleware/auth';
+import { createAuditLog } from '../lib/auditLog';
 
 const router = Router();
 router.use(authMiddleware);
@@ -163,6 +164,7 @@ router.post('/product', async (req: AuthRequest, res: Response) => {
   if (!parsed.success) return res.status(400).json({ message: 'Invalid product data.' });
 
   const accountId = getAccountId(req);
+  const userId = req.user?.userId || 0;
   const { name, brand_id, unit_type, category_ids, min_limit, max_limit } = parsed.data;
 
   const brand = await prisma.brand.findFirst({ where: { id: brand_id } });
@@ -184,6 +186,18 @@ router.post('/product', async (req: AuthRequest, res: Response) => {
 
   await upsertAccountProduct(accountId, product.id, min_limit, max_limit);
 
+  // Registrar log de criação de produto
+  await createAuditLog({
+    userId,
+    accountId,
+    action: 'CREATE',
+    entity: 'Product',
+    entityId: product.id,
+    newValues: { name, brand_id, unit_type, category_ids, min_limit, max_limit },
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+
   const full = await fetchProduct(product.id, accountId);
   return res.status(201).json(mapProduct(full!, accountId));
 });
@@ -194,6 +208,7 @@ router.patch('/product/:id', async (req: AuthRequest, res: Response) => {
   if (!parsed.success) return res.status(400).json({ message: 'Invalid product data.' });
 
   const accountId = getAccountId(req);
+  const userId = req.user?.userId || 0;
   const existing = await prisma.product.findFirst({ where: { id, deleted: false } });
   if (!existing) return res.status(404).json({ message: 'Product not found.' });
   if (!canModifyResource(existing.ownerAccountId, accountId)) {
@@ -204,6 +219,14 @@ router.patch('/product/:id', async (req: AuthRequest, res: Response) => {
 
   const brand = await prisma.brand.findFirst({ where: { id: brand_id } });
   if (!brand) return res.status(400).json({ message: 'Brand not found.' });
+
+  const oldValues = {
+    name: existing.name,
+    brand_id: existing.brandId,
+    unit_type: existing.unitType,
+    min_limit: existing.minLimit,
+    max_limit: existing.maxLimit,
+  };
 
   await prisma.productCategory.deleteMany({ where: { productId: id } });
   await prisma.product.update({
@@ -222,6 +245,19 @@ router.patch('/product/:id', async (req: AuthRequest, res: Response) => {
 
   await upsertAccountProduct(accountId, id, min_limit, max_limit);
 
+  // Registrar log de atualização de produto
+  await createAuditLog({
+    userId,
+    accountId,
+    action: 'UPDATE',
+    entity: 'Product',
+    entityId: id,
+    oldValues,
+    newValues: { name, brand_id, unit_type, category_ids, min_limit, max_limit },
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+
   const full = await fetchProduct(id, accountId);
   return res.json(mapProduct(full!, accountId));
 });
@@ -229,13 +265,34 @@ router.patch('/product/:id', async (req: AuthRequest, res: Response) => {
 router.delete('/product/:id', async (req: AuthRequest, res: Response) => {
   const id = Number(req.params.id);
   const accountId = getAccountId(req);
+  const userId = req.user?.userId || 0;
   const existing = await prisma.product.findFirst({ where: { id, deleted: false } });
   if (!existing) return res.status(404).json({ message: 'Product not found.' });
   if (!canModifyResource(existing.ownerAccountId, accountId)) {
     return res.status(403).json({ message: 'Forbidden.' });
   }
 
+  const oldValues = {
+    name: existing.name,
+    brand_id: existing.brandId,
+    unit_type: existing.unitType,
+    min_limit: existing.minLimit,
+    max_limit: existing.maxLimit,
+  };
+
   await prisma.product.update({ where: { id }, data: { deleted: true } });
+
+  // Registrar log de exclusão de produto
+  await createAuditLog({
+    userId,
+    accountId,
+    action: 'DELETE',
+    entity: 'Product',
+    entityId: id,
+    oldValues,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
   return res.status(204).send();
 });
 

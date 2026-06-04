@@ -5,4 +5,5 @@ export interface ProductMutationRequest {
     category_ids: number[];
     min_limit: number;
     max_limit: number;
+    initial_stock?: number;
 }

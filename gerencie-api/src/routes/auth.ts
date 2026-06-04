@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { prisma, toTimestamp } from '../lib/prisma';
 import { signToken } from '../lib/jwt';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
+import { createAuditLog } from '../lib/auditLog';
 
 const router = Router();
 
@@ -47,6 +48,17 @@ router.post('/auth/login', async (req, res) => {
     accountId: user.accountId,
     email: user.email,
     role: user.role,
+  });
+
+  // Registrar log de login
+  await createAuditLog({
+    userId: user.id,
+    accountId: user.accountId,
+    action: 'LOGIN',
+    entity: 'User',
+    entityId: user.id,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
   });
 
   return res.json({
