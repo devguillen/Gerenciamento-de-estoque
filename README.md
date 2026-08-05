@@ -2,10 +2,53 @@
 
 Sistema web completo de gerenciamento de estoque com suporte multi-tenant, controle de movimentações, logs de auditoria e painel administrativo.
 
+## Demonstração
+
+![Gerencie+ — demonstração](docs/linkedin/demo/gerencie-demo.gif)
+
+<table>
+  <tr>
+    <td><img src="docs/linkedin/screenshots/02-dashboard.png" alt="Dashboard" width="420"></td>
+    <td><img src="docs/linkedin/screenshots/05-estoque.png" alt="Estoque" width="420"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Dashboard — indicadores e estoque por categoria</sub></td>
+    <td align="center"><sub>Estoque — status calculado por item</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/linkedin/screenshots/03-produtos.png" alt="Produtos" width="420"></td>
+    <td><img src="docs/linkedin/screenshots/04-produto-cadastro.png" alt="Cadastro de produto" width="420"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Produtos — busca, filtros e paginação</sub></td>
+    <td align="center"><sub>Cadastro — estoque inicial no próprio formulário</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/linkedin/screenshots/06-compra.png" alt="Registrar compra" width="420"></td>
+    <td><img src="docs/linkedin/screenshots/07-consumo.png" alt="Registrar consumo" width="420"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Compra — múltiplos itens, fornecedor e total</sub></td>
+    <td align="center"><sub>Consumo — saldo projetado antes de confirmar</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/linkedin/screenshots/08-ajuste.png" alt="Ajuste de estoque" width="420"></td>
+    <td><img src="docs/linkedin/screenshots/12-auditoria.png" alt="Logs de auditoria" width="420"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Ajuste — diferença calculada e motivo obrigatório</sub></td>
+    <td align="center"><sub>Auditoria — quem fez o quê e quando</sub></td>
+  </tr>
+</table>
+
+> As capturas usam dados fictícios gerados por `gerencie-api/scripts/demo-seed.ts`.
+> Marcas e fornecedores exibidos não correspondem a empresas reais.
+
 ---
 
 ## Índice
 
+- [Demonstração](#demonstração)
 - [Visão Geral](#visão-geral)
 - [Stack Tecnológica](#stack-tecnológica)
 - [Arquitetura](#arquitetura)
@@ -299,6 +342,17 @@ npm run db:reset     # Executa apenas o seed (re-popula sem recriar tabelas)
 
 npm run test         # Executa os testes
 ```
+
+**Scripts de demonstração** (usados para gerar as capturas do README, não fazem parte do fluxo normal):
+
+```bash
+npx tsx scripts/demo-seed.ts          # Substitui o catálogo por 44 produtos, 112 compras,
+                                      # 854 movimentações e 110 logs fictícios em 90 dias
+npx tsx scripts/demo-clean-logins.ts  # Remove os logins do dia gerados pela automação
+```
+
+`demo-seed.ts` **apaga** catálogo, movimentações e logs antes de recriar. Para voltar ao seed
+oficial, rode `npm run db:setup`.
 
 ### Frontend (`gerencie-web-admin-front`)
 
